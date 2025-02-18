@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة تحكم الشكاوى</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Amiri", serif;
+      }
+      .container {
+        margin-top: 50px;
+      }
+      .header-text {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #1a73e8;
+      }
+      .table-container {
+        margin-top: 40px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .table th,
+      .table td {
+        text-align: center;
+      }
+      .search-input {
+        margin-bottom: 20px;
+      }
+      .table-container {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .form-control,
+      .btn {
+        margin-bottom: 10px;
+      }
+      .btn-info {
+        margin-left: 5px;
+      }
+      header nav {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <!-- زر تسجيل الخروج -->
+        <button class="btn btn-danger" onclick="logout()">تسجيل الخروج</button>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="header-text">
+        <h1>لوحة تحكم شكاوى المواطنين</h1>
+        <p>مرحبًا بك في لوحة تحكم الشكاوى الخاصة بالإدارة</p>
+      </div>
+
+      <!-- شريط البحث -->
+      <div class="row justify-content-center search-input">
+        <div class="col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="searchInput"
+            placeholder="ابحث عن شكوى..."
+          />
+        </div>
+      </div>
+
+      <!-- قسم لعرض الشكاوي المرسلة -->
+      <div class="table-container">
+        <table class="table table-bordered">
+          <thead class="table-primary">
+            <tr>
+              <th scope="col">الرقم</th>
+              <th scope="col">اسم المواطن</th>
+              <th scope="col">البريد الإلكتروني</th>
+              <th scope="col">نوع الشكوى</th>
+              <th scope="col">تفاصيل الشكوى</th>
+              <th scope="col">الرد</th>
+              <th scope="col">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="complaintsTable">
+            <!-- سيتم عرض الشكاوي هنا باستخدام JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- نموذج الرد على الشكوى -->
+      <div id="responseSection" style="display: none; margin-top: 30px">
+        <h4>الرد على الشكوى</h4>
+        <form id="responseForm">
+          <div class="mb-3">
+            <label for="responseDetails" class="form-label"
+              >أدخل ردك على الشكوى:</label
+            >
+            <textarea
+              class="form-control"
+              id="responseDetails"
+              rows="3"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">إرسال الرد</button>
+        </form>
+      </div>
+
+      <!-- النموذج الخاص بالشكاوي في الصفحة الرئيسية -->
+      <div class="mt-4">
+        <h4>إضافة شكوى جديدة</h4>
+        <form id="complaintForm">
+          <div class="mb-3">
+            <label for="name" class="form-label">اسم المواطن</label>
+            <input type="text" class="form-control" id="name" required />
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="email" required />
+          </div>
+          <div class="mb-3">
+            <label for="type" class="form-label">نوع الشكوى</label>
+            <input type="text" class="form-control" id="type" required />
+          </div>
+          <div class="mb-3">
+            <label for="details" class="form-label">تفاصيل الشكوى</label>
+            <textarea
+              class="form-control"
+              id="details"
+              rows="3"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">إضافة شكوى</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- JavaScript (Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <!-- JavaScript لعرض الشكاوي والإجراءات -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const complaints = JSON.parse(localStorage.getItem("complaints")) || [];
+
+        // دالة لعرض الشكاوي في الجدول
+        function displayComplaints() {
+          const tableBody = document.getElementById("complaintsTable");
+          tableBody.innerHTML = ""; // مسح المحتوى السابق
+
+          complaints.forEach((complaint, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td>${complaint.id}</td>
+            <td>${complaint.name}</td>
+            <td>${complaint.email}</td>
+            <td>${complaint.type}</td>
+            <td>${complaint.details}</td>
+            <td>${complaint.response || "لا يوجد رد"}</td>
+            <td>
+              <button class="btn btn-info btn-sm" onclick="respondToComplaint(${index})">رد</button>
+              <button class="btn btn-warning btn-sm" onclick="editComplaint(${index})">تعديل</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteComplaint(${index})">حذف</button>
+            </td>
+          `;
+            tableBody.appendChild(row);
+          });
+        }
+
+        // دالة لإضافة شكوى جديدة
+        document
+          .getElementById("complaintForm")
+          .addEventListener("submit", function (event) {
+            event.preventDefault();
+            const newComplaint = {
+              id: complaints.length + 1,
+              name: document.getElementById("name").value,
+              email: document.getElementById("email").value,
+              type: document.getElementById("type").value,
+              details: document.getElementById("details").value,
+              response: "",
+            };
+            complaints.push(newComplaint);
+            localStorage.setItem("complaints", JSON.stringify(complaints));
+            displayComplaints();
+            this.reset(); // إعادة تعيين النموذج بعد الإضافة
+          });
+
+        // دالة لحذف شكوى
+        window.deleteComplaint = (index) => {
+          complaints.splice(index, 1);
+          localStorage.setItem("complaints", JSON.stringify(complaints));
+          displayComplaints();
+        };
+
+        // دالة لتعديل شكوى
+        window.editComplaint = (index) => {
+          const complaint = complaints[index];
+          document.getElementById("name").value = complaint.name;
+          document.getElementById("email").value = complaint.email;
+          document.getElementById("type").value = complaint.type;
+          document.getElementById("details").value = complaint.details;
+          // تعديل الشكوى وحفظها بعد التعديل يمكن إضافته هنا
+        };
+
+        // دالة للرد على شكوى
+        window.respondToComplaint = (index) => {
+          const responseSection = document.getElementById("responseSection");
+          responseSection.style.display = "block"; // إظهار قسم الرد
+          document.getElementById("responseForm").onsubmit = (e) => {
+            e.preventDefault();
+            const response = document.getElementById("responseDetails").value;
+            complaints[index].response = response;
+            localStorage.setItem("complaints", JSON.stringify(complaints));
+            displayComplaints();
+            responseSection.style.display = "none"; // إخفاء قسم الرد بعد الرد
+          };
+        };
+
+        // عرض الشكاوي عند تحميل الصفحة
+        displayComplaints();
+
+        // شريط البحث لتصفية الشكاوي
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", (event) => {
+            const query = event.target.value.toLowerCase();
+            const filteredComplaints = complaints.filter(
+              (complaint) =>
+                complaint.name.toLowerCase().includes(query) ||
+                complaint.email.toLowerCase().includes(query) ||
+                complaint.type.toLowerCase().includes(query) ||
+                complaint.details.toLowerCase().includes(query)
+            );
+            const tableBody = document.getElementById("complaintsTable");
+            tableBody.innerHTML = "";
+            filteredComplaints.forEach((complaint, index) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+              <td>${complaint.id}</td>
+              <td>${complaint.name}</td>
+              <td>${complaint.email}</td>
+              <td>${complaint.type}</td>
+              <td>${complaint.details}</td>
+              <td>${complaint.response || "لا يوجد رد"}</td>
+              <td>
+                <button class="btn btn-info btn-sm" onclick="respondToComplaint(${index})">رد</button>
+                <button class="btn btn-warning btn-sm" onclick="editComplaint(${index})">تعديل</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteComplaint(${index})">حذف</button>
+              </td>
+            `;
+              tableBody.appendChild(row);
+            });
+          });
+      });
+
+      // دالة لتسجيل الخروج
+      function logout() {
+        // حذف البيانات من localStorage
+        localStorage.removeItem("user");
+        // إعادة توجيه المستخدم إلى صفحة التسجيل
+        window.location.href = "signup.html";
+      }
+    </script>
+  </body>
+</html>
